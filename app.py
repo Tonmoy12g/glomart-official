@@ -40,6 +40,10 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme123")
 BD_PHONE_RE = re.compile(r"^01[3-9]\d{8}$")
 MIN_PASSWORD_LEN = 6
 
+# Delivery charges (server-computed; client value is never trusted)
+DELIVERY_CHARGES = {"inside_dhaka": 60, "outside_dhaka": 120}
+DELIVERY_AREA_BN = {"inside_dhaka": "ঢাকার ভেতরে", "outside_dhaka": "ঢাকার বাইরে"}
+
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5 MB cap for product photo uploads
 
@@ -98,6 +102,13 @@ def init_db():
                created_at TEXT NOT NULL
            )"""
     )
+    # Migration: CREATE TABLE IF NOT EXISTS won't add columns to existing
+    # databases, so add any missing columns explicitly.
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(orders)").fetchall()}
+    if "delivery_area" not in cols:
+        conn.execute("ALTER TABLE orders ADD COLUMN delivery_area TEXT")
+    if "delivery_charge" not in cols:
+        conn.execute("ALTER TABLE orders ADD COLUMN delivery_charge INTEGER")
     conn.commit()
     conn.close()
 
@@ -244,6 +255,20 @@ def new_order_id(conn):
     raise RuntimeError("could not generate a unique order id")
 
 
+def order_dict(row):
+    """Normalize an orders row (tolerates pre-migration rows lacking new columns)."""
+    o = dict(row)
+    try:
+        o["items"] = json.loads(o["items"])
+    except (TypeError, ValueError):
+        o["items"] = []
+    if o.get("delivery_area") not in DELIVERY_CHARGES:
+        o["delivery_area"] = None
+    if o.get("delivery_charge") is None:
+        o["delivery_charge"] = 0
+    return o
+
+
 @app.post("/api/orders")
 def create_order():
     # Orders require a logged-in account; name/phone come from the account.
@@ -256,14 +281,18 @@ def create_order():
     notes = str(data.get("notes") or "").strip()
     items_in = data.get("items") or []
     payment = str(data.get("payment") or "cod").strip().lower()
+    delivery_area = str(data.get("delivery_area") or "").strip().lower()
 
     if len(address) < 10:
         return err("address_required", 400)
     if payment != "cod":
         return err("unsupported_payment", 400)
+    if delivery_area not in DELIVERY_CHARGES:
+        return err("invalid_delivery_area", 400)
+    delivery_charge = DELIVERY_CHARGES[delivery_area]
 
     products = {p["id"]: p for p in load_products()}
-    items, total = [], 0
+    items, items_total = [], 0
     for it in items_in:
         pid = it.get("id")
         qty = it.get("qty")
@@ -273,16 +302,20 @@ def create_order():
         items.append(
             {"id": pid, "name": products[pid]["name"], "price": price, "qty": qty}
         )
-        total += price * qty
+        items_total += price * qty
     if not items:
         return err("empty_cart", 400)
+
+    # Server-computed total: client totals are never trusted.
+    total = items_total + delivery_charge
 
     conn = get_db()
     order_id = new_order_id(conn)
     conn.execute(
         """INSERT INTO orders
-           (order_id, user_id, name, phone, address, notes, items, total, payment, status, created_at)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+           (order_id, user_id, name, phone, address, notes, items, total, payment,
+            status, delivery_area, delivery_charge, created_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (
             order_id,
             user["id"],
@@ -294,11 +327,32 @@ def create_order():
             total,
             "cod",
             "pending",
+            delivery_area,
+            delivery_charge,
             now_iso(),
         ),
     )
     conn.commit()
-    return jsonify({"ok": True, "order_id": order_id, "total": total}), 201
+    return jsonify({
+        "ok": True,
+        "order_id": order_id,
+        "total": total,
+        "delivery_charge": delivery_charge,
+        "delivery_area": delivery_area,
+    }), 201
+
+
+@app.get("/api/orders/mine")
+def my_orders():
+    """The logged-in customer's own orders, newest first."""
+    user, error = require_user()
+    if error:
+        return error
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC", (user["id"],)
+    ).fetchall()
+    return jsonify({"ok": True, "orders": [order_dict(r) for r in rows]})
 
 
 # ---------------------------------------------------------------------------
@@ -317,14 +371,7 @@ def admin_orders():
         return err("unauthorized", 401)
     conn = get_db()
     rows = conn.execute("SELECT * FROM orders ORDER BY id DESC").fetchall()
-    orders = []
-    for r in rows:
-        o = dict(r)
-        try:
-            o["items"] = json.loads(o["items"])
-        except (TypeError, ValueError):
-            o["items"] = []
-        orders.append(o)
+    orders = [order_dict(r) for r in rows]
     return jsonify({"ok": True, "orders": orders})
 
 

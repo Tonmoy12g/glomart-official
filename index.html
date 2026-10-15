@@ -46,6 +46,8 @@
       <div class="brand">🌸 GlowMart</div>
       <div class="search"><input id="search" type="search" placeholder="পণ্য খুঁজুন…"><button aria-label="খুঁজুন">🔍</button></div>
       <span id="user-chip" class="user-chip"></span>
+      <button id="orders-btn" class="outline-btn">📦 আমার অর্ডার</button>
+      <button id="wishlist-btn" class="outline-btn">❤️ পছন্দের <strong id="wish-count">০</strong></button>
       <button id="logout-btn" class="outline-btn">লগআউট</button>
       <button id="cart-btn" class="cart-btn">🛒 কার্ট <strong id="cart-count">০</strong></button>
     </div>
@@ -56,20 +58,29 @@
   <!-- Hero carousel -->
   <section class="hero" aria-label="অফার ব্যানার">
     <div class="slides" id="hero-slides">
-      <div class="slide s1 active">
-        <h2>✨ বিউটি সেল</h2>
-        <p>পছন্দের স্কিনকেয়ার পণ্যে আকর্ষণীয় ছাড়</p>
-        <a href="#catalog" class="btn-primary">এখনই কিনুন</a>
+      <div class="slide active">
+        <img src="hero-1.jpg" alt="বিউটি সেল">
+        <div class="slide-text">
+          <h2>✨ বিউটি সেল</h2>
+          <p>পছন্দের স্কিনকেয়ার পণ্যে আকর্ষণীয় ছাড়</p>
+          <a href="#catalog" class="btn-primary">এখনই কিনুন</a>
+        </div>
       </div>
-      <div class="slide s2">
-        <h2>🌿 ১০০% অরিজিনাল</h2>
-        <p>ভেরিফায়েড স্কিনকেয়ার ও বিউটি পণ্য</p>
-        <a href="#catalog" class="btn-primary">পণ্য দেখুন</a>
+      <div class="slide">
+        <img src="hero-2.jpg" alt="১০০% অরিজিনাল">
+        <div class="slide-text">
+          <h2>🌿 ১০০% অরিজিনাল</h2>
+          <p>ভেরিফায়েড স্কিনকেয়ার ও বিউটি পণ্য</p>
+          <a href="#catalog" class="btn-primary">পণ্য দেখুন</a>
+        </div>
       </div>
-      <div class="slide s3">
-        <h2>🚚 ক্যাশ অন ডেলিভারি</h2>
-        <p>সারাদেশে হোম ডেলিভারি — আগে পণ্য, পরে টাকা</p>
-        <a href="#catalog" class="btn-primary">অর্ডার করুন</a>
+      <div class="slide">
+        <img src="hero-3.jpg" alt="ক্যাশ অন ডেলিভারি">
+        <div class="slide-text">
+          <h2>🚚 ক্যাশ অন ডেলিভারি</h2>
+          <p>সারাদেশে হোম ডেলিভারি — আগে পণ্য, পরে টাকা</p>
+          <a href="#catalog" class="btn-primary">অর্ডার করুন</a>
+        </div>
       </div>
     </div>
     <div class="dots" id="hero-dots">
@@ -132,7 +143,10 @@
   <div class="modal">
     <button id="modal-close" class="modal-x" aria-label="বন্ধ করুন">✕</button>
     <img id="modal-img" src="" alt="">
-    <h3 id="modal-name"></h3>
+    <div class="modal-title-row">
+      <h3 id="modal-name"></h3>
+      <button id="modal-wish" class="wish-btn big" aria-label="পছন্দের তালিকায় যোগ করুন">♡</button>
+    </div>
     <p class="muted" id="modal-size"></p>
     <p class="price big" id="modal-price"></p>
     <p id="modal-desc"></p>
@@ -164,6 +178,11 @@
     <label>মোবাইল নম্বর<input id="co-phone" type="tel" required></label>
     <label>সম্পূর্ণ ডেলিভারি ঠিকানা<textarea id="co-address" rows="3" placeholder="বাসা/হোল্ডিং, রোড, এলাকা, থানা, জেলা" required></textarea></label>
     <label>অর্ডার নোট (ঐচ্ছিক)<textarea id="co-notes" rows="2" placeholder="বিশেষ নির্দেশনা থাকলে লিখুন"></textarea></label>
+    <div class="delivery-choice">
+      <p><strong>ডেলিভারি এলাকা</strong></p>
+      <label class="radio"><input type="radio" name="delivery_area" value="inside_dhaka" checked> ঢাকার ভেতরে <span class="muted">(৳৬০)</span></label>
+      <label class="radio"><input type="radio" name="delivery_area" value="outside_dhaka"> ঢাকার বাইরে <span class="muted">(৳১২০)</span></label>
+    </div>
     <p class="pay-line">💵 পেমেন্ট: <strong>ক্যাশ অন ডেলিভারি</strong></p>
     <p id="form-error" class="error"></p>
     <button type="submit" class="btn-primary">অর্ডার কনফার্ম করুন</button>
@@ -176,10 +195,27 @@
     <h2>✅ অর্ডার কনফার্ম!</h2>
     <p>আপনার অর্ডার নম্বর:</p>
     <p class="order-id" id="order-id"></p>
+    <div id="confirm-breakdown" class="confirm-breakdown"></div>
     <p class="muted">শীঘ্রই আমাদের টিম ফোন করে কনফার্ম করবে। ক্যাশ অন ডেলিভারিতে পণ্য হাতে পেয়ে টাকা দেবেন।</p>
     <button id="continue-shopping" class="btn-primary">আরও কেনাকাটা করুন</button>
   </div>
 </section>
+
+<!-- ============ MY ORDERS MODAL ============ -->
+<div id="orders-modal" class="hidden modal-wrap">
+  <div class="modal">
+    <button id="orders-close" class="modal-x" aria-label="বন্ধ করুন">✕</button>
+    <h3>📦 আমার অর্ডার</h3>
+    <div id="my-orders"></div>
+  </div>
+</div>
+
+<!-- ============ WISHLIST DRAWER ============ -->
+<div id="wish-overlay" class="hidden"></div>
+<aside id="wish-drawer" class="hidden">
+  <div class="drawer-head"><h3>❤️ পছন্দের তালিকা</h3><button id="wish-close" aria-label="বন্ধ করুন">✕</button></div>
+  <div id="wish-items"></div>
+</aside>
 
 <script src="app.js"></script>
 </body>

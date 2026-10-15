@@ -88,7 +88,7 @@
       <div class="card">
         <h2>অর্ডারসমূহ <span class="badge" id="order-count"></span></h2>
         <div class="tblwrap"><table>
-          <thead><tr><th>অর্ডার আইডি</th><th>তারিখ</th><th>ক্রেতা</th><th>ফোন</th><th>ঠিকানা</th><th>পণ্য</th><th>মোট</th><th>স্ট্যাটাস</th></tr></thead>
+          <thead><tr><th>অর্ডার আইডি</th><th>তারিখ</th><th>ক্রেতা</th><th>ফোন</th><th>ঠিকানা</th><th>পণ্য</th><th>ডেলিভারি</th><th>মোট</th><th>স্ট্যাটাস</th></tr></thead>
           <tbody id="order-rows"></tbody>
         </table></div>
       </div>
@@ -136,6 +136,7 @@
 let ADMIN_PW = "";
 let PRODUCTS = [];
 const STATUS_BN = { pending: "অপেক্ষমাণ", confirmed: "কনফার্মড", delivered: "ডেলিভার্ড", cancelled: "বাতিল" };
+const AREA_BN = { inside_dhaka: "ঢাকার ভেতরে", outside_dhaka: "ঢাকার বাইরে" };
 
 function escapeHtml(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, c =>
@@ -198,10 +199,13 @@ function renderOrders(orders) {
   document.getElementById("order-count").textContent = orders.length + "টি";
   document.getElementById("order-rows").innerHTML = orders.map(o => {
     const items = (o.items || []).map(i => `${escapeHtml(i.name)} × ${i.qty}`).join("<br>");
+    const area = AREA_BN[o.delivery_area] || "—";
+    const charge = o.delivery_charge != null ? "৳" + o.delivery_charge : "—";
     return `<tr>
       <td><b>${escapeHtml(o.order_id)}</b></td><td>${fmtDate(o.created_at)}</td>
       <td>${escapeHtml(o.name)}</td><td>${escapeHtml(o.phone)}</td>
-      <td>${escapeHtml(o.address)}</td><td>${items}</td><td>৳${o.total}</td>
+      <td>${escapeHtml(o.address)}</td><td>${items}</td>
+      <td>${escapeHtml(area)}<br>${charge}</td><td>৳${o.total}</td>
       <td><select class="status-sel" onchange="setStatus('${escapeHtml(o.order_id)}', this.value)">${statusOptions(o.status)}</select></td>
     </tr>`;
   }).join("");

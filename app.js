@@ -4,12 +4,15 @@
 
 const TOKEN_KEY = "glowmart_token";
 const CART_KEY = "glowmart_cart";
+const WISH_KEY = "glowmart_wishlist";
 
 let authToken = localStorage.getItem(TOKEN_KEY) || null;
 let account = null; // {name, phone} after login
 let products = [];
 let cart = {};
 try { cart = JSON.parse(localStorage.getItem(CART_KEY) || "{}"); } catch (e) { cart = {}; }
+let wishlist = new Set();
+try { wishlist = new Set(JSON.parse(localStorage.getItem(WISH_KEY) || "[]")); } catch (e) { wishlist = new Set(); }
 let activeCategory = "সব";
 let modalProduct = null;
 let modalQty = 1;
@@ -31,8 +34,16 @@ const ERROR_BN = {
   invalid_credentials: "মোবাইল নম্বর বা পাসওয়ার্ড ভুল হয়েছে।",
   address_required: "সম্পূর্ণ ডেলিভারি ঠিকানা লিখুন।",
   empty_cart: "কার্ট খালি — আগে পণ্য যোগ করুন।",
+  invalid_delivery_area: "ডেলিভারি এলাকা বেছে নিন।",
   network: "নেটওয়ার্ক সমস্যা — আবার চেষ্টা করুন।",
 };
+
+// Delivery areas (charges are server-computed; these are for display)
+const DELIVERY_AREAS = {
+  inside_dhaka: { label: "ঢাকার ভেতরে", charge: 60 },
+  outside_dhaka: { label: "ঢাকার বাইরে", charge: 120 },
+};
+const STATUS_BN = { pending: "অপেক্ষমাণ", confirmed: "কনফার্মড", delivered: "ডেলিভার্ড", cancelled: "বাতিল" };
 
 // Fixed category nav (only categories that have products + offers)
 const CATEGORIES = ["সব", "স্কিনকেয়ার", "অফার"];
@@ -128,12 +139,21 @@ async function enterSite() {
   $("co-phone").value = account.phone;
   await loadProducts();
   renderCart();
+  updateWishCount();
   startHero();
   startCountdown();
 }
 
 function wireShop() {
   $("logout-btn").onclick = logout;
+  $("orders-btn").onclick = openOrders;
+  $("orders-close").onclick = () => $("orders-modal").classList.add("hidden");
+  $("orders-modal").addEventListener("click", (e) => {
+    if (e.target.id === "orders-modal") $("orders-modal").classList.add("hidden");
+  });
+  $("wishlist-btn").onclick = openWish;
+  $("wish-close").onclick = closeWish;
+  $("wish-overlay").onclick = closeWish;
   $("cart-btn").onclick = openDrawer;
   $("drawer-close").onclick = closeDrawer;
   $("drawer-overlay").onclick = closeDrawer;
@@ -155,6 +175,9 @@ function wireShop() {
     if (modalProduct) { addToCart(modalProduct.id, modalQty); $("product-modal").classList.add("hidden"); openDrawer(); }
   };
   $("checkout-form").onsubmit = submitOrder;
+  document.querySelectorAll('input[name="delivery_area"]').forEach((r) => {
+    r.addEventListener("change", renderCheckoutSummary);
+  });
   $("continue-shopping").onclick = () => {
     $("confirmation").classList.add("hidden");
     document.getElementById("catalog").scrollIntoView({ behavior: "smooth" });
@@ -241,7 +264,9 @@ function starsHtml(p) {
 }
 
 function cardHtml(p) {
+  const wished = wishlist.has(p.id);
   return badgesHtml(p) +
+    `<button class="wish-btn${wished ? " active" : ""}" data-wish="${p.id}" aria-label="পছন্দের তালিকা">${wished ? "♥" : "♡"}</button>` +
     `<img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy">` +
     `<div class="card-body"><h3>${escapeHtml(p.name)}</h3>` +
     `<p class="muted small">${escapeHtml(p.size || "")}</p>` +
@@ -254,9 +279,12 @@ function cardHtml(p) {
 }
 
 function wireCard(card, p) {
-  const [detailBtn, addBtn] = card.querySelectorAll("button");
-  detailBtn.onclick = (e) => { e.stopPropagation(); openModal(p.id); };
-  addBtn.onclick = (e) => { e.stopPropagation(); addToCart(p.id, 1); openDrawer(); };
+  const wishBtn = card.querySelector(".wish-btn");
+  const detailBtn = card.querySelector(".btn-outline");
+  const addBtn = card.querySelector(".btn-add");
+  if (wishBtn) wishBtn.onclick = (e) => { e.stopPropagation(); toggleWish(p.id); };
+  if (detailBtn) detailBtn.onclick = (e) => { e.stopPropagation(); openModal(p.id); };
+  if (addBtn) addBtn.onclick = (e) => { e.stopPropagation(); addToCart(p.id, 1); openDrawer(); };
   card.onclick = () => openModal(p.id);
 }
 
@@ -300,6 +328,8 @@ function openModal(id) {
   $("modal-price").textContent = taka(p.price);
   $("modal-desc").textContent = p.description || "";
   $("modal-usage").textContent = p.usage || "—";
+  updateModalWish();
+  $("modal-wish").onclick = () => toggleWish(p.id);
   $("product-modal").classList.remove("hidden");
 }
 
@@ -366,14 +396,94 @@ function closeDrawer() {
   $("drawer-overlay").classList.add("hidden");
 }
 
+/* ---------------- Wishlist (localStorage, works with/without login) ---------------- */
+function saveWishlist() {
+  localStorage.setItem(WISH_KEY, JSON.stringify([...wishlist]));
+}
+
+function toggleWish(id) {
+  if (wishlist.has(id)) wishlist.delete(id);
+  else wishlist.add(id);
+  saveWishlist();
+  updateWishCount();
+  renderGrid();
+  renderFlash();
+  updateModalWish();
+  if (!$("wish-drawer").classList.contains("hidden")) renderWish();
+}
+
+function updateWishCount() {
+  $("wish-count").textContent = bn(wishlist.size);
+}
+
+function updateModalWish() {
+  const b = $("modal-wish");
+  if (!modalProduct || !b) return;
+  const on = wishlist.has(modalProduct.id);
+  b.textContent = on ? "♥" : "♡";
+  b.classList.toggle("active", on);
+}
+
+function renderWish() {
+  const box = $("wish-items");
+  const ids = [...wishlist].map((id) => products.find((p) => p.id === id)).filter(Boolean);
+  if (ids.length === 0) {
+    box.innerHTML = '<p class="wish-empty">পছন্দের তালিকা খালি আছে।<br>পণ্যের ♡ চাপলে এখানে জমা হবে।</p>';
+    return;
+  }
+  box.innerHTML = "";
+  ids.forEach((p) => {
+    const row = document.createElement("div");
+    row.className = "wish-item";
+    row.innerHTML =
+      `<img src="${p.image}" alt="${escapeHtml(p.name)}">` +
+      `<div class="info"><p><strong>${escapeHtml(p.name)}</strong></p>` +
+      `<p class="price">${taka(p.price)}</p>` +
+      `<div class="row">` +
+      `<button class="btn-add">কার্টে যোগ করুন</button>` +
+      `<button class="btn-outline">✕ মুছুন</button>` +
+      `</div></div>`;
+    const [addBtn, delBtn] = row.querySelectorAll("button");
+    addBtn.onclick = () => { addToCart(p.id, 1); openDrawer(); };
+    delBtn.onclick = () => toggleWish(p.id);
+    box.appendChild(row);
+  });
+}
+
+function openWish() {
+  renderWish();
+  $("wish-drawer").classList.remove("hidden");
+  $("wish-overlay").classList.remove("hidden");
+}
+function closeWish() {
+  $("wish-drawer").classList.add("hidden");
+  $("wish-overlay").classList.add("hidden");
+}
+
 /* ---------------- Checkout ---------------- */
+function selectedDeliveryArea() {
+  const r = document.querySelector('input[name="delivery_area"]:checked');
+  return r ? r.value : "inside_dhaka";
+}
+function deliveryChargeFor() {
+  const a = DELIVERY_AREAS[selectedDeliveryArea()];
+  return a ? a.charge : 0;
+}
+function orderTotal() {
+  return cartTotal() + deliveryChargeFor();
+}
+
 function renderCheckoutSummary() {
   const box = $("checkout-summary");
+  const area = DELIVERY_AREAS[selectedDeliveryArea()] || DELIVERY_AREAS.inside_dhaka;
   const lines = Object.entries(cart).map(([id, qty]) => {
     const p = products.find((x) => x.id === id);
     return p ? `<p>${escapeHtml(p.name)} × ${bn(qty)} = <strong>${taka(p.price * qty)}</strong></p>` : "";
   }).join("");
-  box.innerHTML = lines + `<p class="total-row">সর্বমোট: <strong>${taka(cartTotal())}</strong></p>`;
+  box.innerHTML = lines +
+    `<p class="summary-line"><span>সাবটোটাল</span><span>${taka(cartTotal())}</span></p>` +
+    `<p class="summary-line"><span>ডেলিভারি চার্জ (${area.label})</span><span>${taka(area.charge)}</span></p>` +
+    `<p class="total-row summary-line"><span>সর্বমোট</span><strong>${taka(orderTotal())}</strong></p>`;
 }
 
 async function submitOrder(e) {
@@ -383,27 +493,36 @@ async function submitOrder(e) {
   const address = $("co-address").value.trim();
   if (address.length < 10) { errEl.textContent = ERROR_BN.address_required; return; }
   if (Object.keys(cart).length === 0) { errEl.textContent = ERROR_BN.empty_cart; return; }
+  const deliveryArea = selectedDeliveryArea();
+  if (!DELIVERY_AREAS[deliveryArea]) { errEl.textContent = ERROR_BN.invalid_delivery_area; return; }
 
   const payload = {
     address,
     notes: $("co-notes").value.trim(),
     items: Object.entries(cart).map(([id, qty]) => ({ id, qty })),
     payment: "cod",
+    delivery_area: deliveryArea,
   };
   try {
     const { status, data } = await api("/api/orders", { method: "POST", body: JSON.stringify(payload) });
     if (status === 201 && data && data.ok) {
+      const area = DELIVERY_AREAS[data.delivery_area] || DELIVERY_AREAS.inside_dhaka;
       cart = {};
       saveCart();
       renderCart();
       $("checkout-section").classList.add("hidden");
       $("order-id").textContent = data.order_id;
+      $("confirm-breakdown").innerHTML =
+        `<p class="summary-line"><span>সাবটোটাল</span><span>${taka(data.total - data.delivery_charge)}</span></p>` +
+        `<p class="summary-line"><span>ডেলিভারি চার্জ (${area.label})</span><span>${taka(data.delivery_charge)}</span></p>` +
+        `<p class="total-row summary-line"><span>সর্বমোট (COD)</span><strong>${taka(data.total)}</strong></p>`;
       $("confirmation").classList.remove("hidden");
       $("confirmation").scrollIntoView({ behavior: "smooth" });
       $("checkout-form").reset();
       // re-fill account info after reset
       $("co-name").value = account.name;
       $("co-phone").value = account.phone;
+      renderCheckoutSummary();
     } else if (status === 401) {
       logout();
     } else {
@@ -412,6 +531,53 @@ async function submitOrder(e) {
   } catch (e) {
     errEl.textContent = ERROR_BN.network;
   }
+}
+
+/* ---------------- My orders (customer tracking) ---------------- */
+function stepperHtml(status) {
+  // cancelled orders show no forward progress
+  const steps = [["অর্ডার", "pending"], ["কনফার্মড", "confirmed"], ["ডেলিভার্ড", "delivered"]];
+  const order = ["pending", "confirmed", "delivered"];
+  const cur = status === "cancelled" ? -1 : order.indexOf(status);
+  return '<div class="stepper">' + steps.map(([label, s], i) => {
+    const done = cur >= 0 && i <= cur;
+    return `<div class="step${done ? " done" : ""}"><div class="dot">${done ? "✓" : bn(i + 1)}</div>${label}</div>`;
+  }).join("") + "</div>";
+}
+
+async function openOrders() {
+  const box = $("my-orders");
+  box.innerHTML = '<p class="muted center">লোড হচ্ছে…</p>';
+  $("orders-modal").classList.remove("hidden");
+  try {
+    const { status, data } = await api("/api/orders/mine");
+    if (status === 401) { logout(); return; }
+    const orders = (data && data.orders) || [];
+    if (orders.length === 0) {
+      box.innerHTML = '<p class="wish-empty">📦<br>এখনো কোনো অর্ডার নেই।<br>পছন্দের পণ্য কার্টে যোগ করে অর্ডার করুন!</p>';
+      return;
+    }
+    box.innerHTML = "";
+    orders.forEach((o) => {
+      const area = DELIVERY_AREAS[o.delivery_area];
+      const card = document.createElement("div");
+      card.className = "order-card";
+      card.innerHTML =
+        `<p><span class="oid">${escapeHtml(o.order_id)}</span></p>` +
+        `<p class="odate">${fmtDateBn(o.created_at)}${area ? " • " + area.label : ""}</p>` +
+        `<span class="ostatus ${escapeHtml(o.status)}">${STATUS_BN[o.status] || escapeHtml(o.status)}</span>` +
+        stepperHtml(o.status) +
+        `<div class="oitems">${(o.items || []).map((i) => `${escapeHtml(i.name)} × ${bn(i.qty)}`).join("<br>")}</div>` +
+        `<div class="ototal"><span>সর্বমোট (ডেলিভারিসহ)</span><span>${taka(o.total)}</span></div>`;
+      box.appendChild(card);
+    });
+  } catch (e) {
+    box.innerHTML = '<p class="error center">নেটওয়ার্ক সমস্যা — আবার চেষ্টা করুন।</p>';
+  }
+}
+
+function fmtDateBn(iso) {
+  try { return new Date(iso).toLocaleString("bn-BD"); } catch (e) { return ""; }
 }
 
 function escapeHtml(s) {
