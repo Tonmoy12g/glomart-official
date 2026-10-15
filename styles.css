@@ -194,3 +194,7 @@ footer a{color:#f7a8c4;text-decoration:none}
 .step.done{color:var(--green);font-weight:700}
 .step:not(:last-child)::after{content:"";position:absolute;top:11px;left:calc(50% + 14px);right:calc(-50% + 14px);height:2px;background:#eee}
 .step.done:not(:last-child)::after{background:var(--green)}
+
+/* WhatsApp floating button */
+#wa-float{position:fixed;right:16px;bottom:16px;z-index:60;width:56px;height:56px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.25);transition:transform .15s}
+#wa-float:hover{transform:scale(1.08)}
