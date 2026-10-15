@@ -1,0 +1,71 @@
+[
+  {
+    "category": "Beauty & Personal Care",
+    "description": "পুরুষদের ত্বকের জন্য বিশেষভাবে তৈরি রিফ্রেশিং ফেসওয়াশ। SLS ও প্যারাবেন মুক্ত, সমুদ্রের নির্যাস সমৃদ্ধ — প্রতিদিনের ব্যবহারে ত্বক থাকে পরিষ্কার, সতেজ ও প্রাণবন্ত।",
+    "id": "muuchstac-ocean-fw",
+    "image": "muuchstac-ocean-facewash.jpg",
+    "name": "Muuchstac Ocean Face Wash for Men",
+    "price": 500,
+    "size": "100ml",
+    "usage": "মুখ পানি দিয়ে ভিজিয়ে অল্প পরিমাণ ফেসওয়াশ নিয়ে আলতো করে ম্যাসাজ করুন, তারপর পানি দিয়ে ধুয়ে ফেলুন। সেরা ফলাফলের জন্য দিনে দুইবার ব্যবহার করুন।",
+    "badge": "বেস্ট সেলার",
+    "rating": 4.9,
+    "reviews": 212
+  },
+  {
+    "id": "serum-vitamin-c",
+    "name": "Vitamin C Face Serum",
+    "size": "30ml",
+    "category": "Skincare",
+    "price": 850,
+    "image": "serum-vitamin-c.jpg",
+    "badge": "নতুন",
+    "sample": true,
+    "description": "ভিটামিন সি, ভিটামিন ই ও ফেরুলিক অ্যাসিড সমৃদ্ধ ব্রাইটনিং সিরাম। ত্বকের উজ্জ্বলতা বাড়ায়, দাগ হালকা করে ও ত্বক রাখে সতেজ।",
+    "usage": "মুখ ধুয়ে শুকনো ত্বকে ২-৩ ফোঁটা সিরাম নিয়ে আলতো করে লাগান। সকালে ব্যবহারের পর সানস্ক্রিন লাগাতে ভুলবেন না।",
+    "rating": 4.7,
+    "reviews": 86
+  },
+  {
+    "id": "moisturizer-cream",
+    "name": "Hydra Boost Moisturizer",
+    "size": "50ml",
+    "category": "Skincare",
+    "price": 450,
+    "image": "moisturizer-cream.jpg",
+    "badge": "-২০%",
+    "sample": true,
+    "description": "হায়ালুরনিক অ্যাসিড সমৃদ্ধ হালকা ময়েশ্চারাইজার। ত্বককে ২৪ ঘণ্টা আর্দ্র রাখে, তেলতেলে ভাব ছাড়াই। সব ধরনের ত্বকের জন্য উপযুক্ত।",
+    "usage": "সকালে ও রাতে মুখ ধোয়ার পর পরিমাণমতো ক্রিম নিয়ে পুরো মুখে লাগান।",
+    "rating": 4.6,
+    "reviews": 64
+  },
+  {
+    "id": "sunscreen-spf50",
+    "name": "Sun Protect SPF 50",
+    "size": "60ml",
+    "category": "Skincare",
+    "price": 550,
+    "image": "sunscreen-spf50.jpg",
+    "badge": "বেস্ট সেলার",
+    "sample": true,
+    "description": "SPF 50 PA+++ সানস্ক্রিন — UVA/UVB থেকে পূর্ণ সুরক্ষা। হালকা, নন-গ্রিজি ফর্মুলা, সাদা দাগ পড়ে না। প্রতিদিনের বাইরের কাজে আদর্শ।",
+    "usage": "বাইরে যাওয়ার ১৫ মিনিট আগে মুখসহ খোলা ত্বকে লাগান। ৩-৪ ঘণ্টা পর পুনরায় লাগান।",
+    "rating": 4.8,
+    "reviews": 143
+  },
+  {
+    "id": "toner-rose",
+    "name": "Rose Water Toner",
+    "size": "100ml",
+    "category": "Skincare",
+    "price": 350,
+    "image": "toner-rose.jpg",
+    "badge": "নতুন",
+    "sample": true,
+    "description": "খাঁটি গোলাপজলের টোনার — ত্বকের pH ব্যালান্স ঠিক রাখে, পোর টাইট করে ও ত্বকে আনে প্রাকৃতিক গ্লো। অ্যালকোহল মুক্ত।",
+    "usage": "মুখ ধোয়ার পর তুলোয় নিয়ে মুখে লাগান অথবা সরাসরি স্প্রে করুন। দিনে দুইবার ব্যবহার করুন।",
+    "rating": 4.5,
+    "reviews": 52
+  }
+]

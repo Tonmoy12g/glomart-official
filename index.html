@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GlowMart — অনলাইন স্কিনকেয়ার শপ</title>
+<meta name="description" content="GlowMart — বাংলাদেশের বিশ্বস্ত অনলাইন স্কিনকেয়ার ও বিউটি শপ। ক্যাশ অন ডেলিভারি।">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============ AUTH GATE (login/signup before entering) ============ -->
+<div id="auth-gate">
+  <div class="gate-card">
+    <h1 class="gate-brand">🌸 GlowMart</h1>
+    <p class="muted">কেনাকাটা করতে লগইন করুন</p>
+    <div class="gate-tabs">
+      <button id="tab-login" class="active">লগইন</button>
+      <button id="tab-signup">নতুন অ্যাকাউন্ট</button>
+    </div>
+    <form id="login-form">
+      <label>মোবাইল নম্বর<input id="login-phone" type="tel" placeholder="01XXXXXXXXX" required></label>
+      <label>পাসওয়ার্ড<input id="login-password" type="password" placeholder="পাসওয়ার্ড" required></label>
+      <p id="gate-error" class="error"></p>
+      <button type="submit" class="btn-primary">লগইন করুন</button>
+    </form>
+    <form id="signup-form" class="hidden">
+      <label>নাম<input id="signup-name" type="text" placeholder="আপনার নাম" required></label>
+      <label>মোবাইল নম্বর<input id="signup-phone" type="tel" placeholder="01XXXXXXXXX" required></label>
+      <label>পাসওয়ার্ড<input id="signup-password" type="password" placeholder="কমপক্ষে ৬ অক্ষর" required></label>
+      <button type="submit" class="btn-primary">অ্যাকাউন্ট খুলুন</button>
+    </form>
+    <p class="muted small">একবার অ্যাকাউন্ট খুললে পরেরবার শুধু লগইন করলেই হবে।</p>
+  </div>
+</div>
+
+<!-- ============ MAIN APP ============ -->
+<div id="app" class="hidden">
+
+  <!-- Announcement bar -->
+  <div class="announce">🚚 সারাদেশে ক্যাশ অন ডেলিভারি &nbsp;•&nbsp; ✅ ১০০% অরিজিনাল পণ্যের নিশ্চয়তা</div>
+
+  <!-- Sticky header -->
+  <header>
+    <div class="nav">
+      <div class="brand">🌸 GlowMart</div>
+      <div class="search"><input id="search" type="search" placeholder="পণ্য খুঁজুন…"><button aria-label="খুঁজুন">🔍</button></div>
+      <span id="user-chip" class="user-chip"></span>
+      <button id="logout-btn" class="outline-btn">লগআউট</button>
+      <button id="cart-btn" class="cart-btn">🛒 কার্ট <strong id="cart-count">০</strong></button>
+    </div>
+    <!-- Category nav -->
+    <nav class="catnav"><div id="category-chips" class="chips"></div></nav>
+  </header>
+
+  <!-- Hero carousel -->
+  <section class="hero" aria-label="অফার ব্যানার">
+    <div class="slides" id="hero-slides">
+      <div class="slide s1 active">
+        <h2>✨ বিউটি সেল</h2>
+        <p>পছন্দের স্কিনকেয়ার পণ্যে আকর্ষণীয় ছাড়</p>
+        <a href="#catalog" class="btn-primary">এখনই কিনুন</a>
+      </div>
+      <div class="slide s2">
+        <h2>🌿 ১০০% অরিজিনাল</h2>
+        <p>ভেরিফায়েড স্কিনকেয়ার ও বিউটি পণ্য</p>
+        <a href="#catalog" class="btn-primary">পণ্য দেখুন</a>
+      </div>
+      <div class="slide s3">
+        <h2>🚚 ক্যাশ অন ডেলিভারি</h2>
+        <p>সারাদেশে হোম ডেলিভারি — আগে পণ্য, পরে টাকা</p>
+        <a href="#catalog" class="btn-primary">অর্ডার করুন</a>
+      </div>
+    </div>
+    <div class="dots" id="hero-dots">
+      <button class="active" aria-label="ব্যানার ১"></button>
+      <button aria-label="ব্যানার ২"></button>
+      <button aria-label="ব্যানার ৩"></button>
+    </div>
+  </section>
+
+  <!-- Flash sale -->
+  <section class="flash" id="flash">
+    <div class="sec-head">
+      <h2>⚡ ফ্ল্যাশ সেল</h2>
+      <div class="countdown">শেষ হতে বাকি: <strong id="flash-countdown">--:--:--</strong></div>
+    </div>
+    <div class="hscroll" id="flash-grid"></div>
+  </section>
+
+  <!-- Best sellers -->
+  <section class="catalog" id="catalog">
+    <h2>🏆 বেস্ট সেলার</h2>
+    <div class="grid" id="product-grid"></div>
+    <p id="no-results" class="hidden muted center">কোনো পণ্য পাওয়া যায়নি — অন্য কিছু লিখে খুঁজুন।</p>
+  </section>
+
+  <!-- Trust strip -->
+  <section class="trust">
+    <h2>কেন GlowMart থেকে কিনবেন</h2>
+    <div class="trust-grid">
+      <div class="trust-item"><span>💵</span><h3>ক্যাশ অন ডেলিভারি</h3><p>পণ্য হাতে পেয়ে টাকা দিন</p></div>
+      <div class="trust-item"><span>✅</span><h3>১০০% অরিজিনাল</h3><p>ভেরিফায়েড অরিজিনাল পণ্য</p></div>
+      <div class="trust-item"><span>🚚</span><h3>সারাদেশে ডেলিভারি</h3><p>দ্রুত হোম ডেলিভারি</p></div>
+      <div class="trust-item"><span>↩️</span><h3>সহজ রিটার্ন</h3><p>৭ দিনের রিটার্ন সুবিধা</p></div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="reviews">
+    <h2>💬 কাস্টমার রিভিউ</h2>
+    <div class="review-grid">
+      <div class="review"><p class="stars">★★★★★</p><p>"ফেসওয়াশটা একদম অরিজিনাল, ডেলিভারিও পেয়েছি ২ দিনে। GlowMart-কে ধন্যবাদ!"</p><p class="muted">— শারমিন, ঢাকা</p></div>
+      <div class="review"><p class="stars">★★★★★</p><p>"ক্যাশ অন ডেলিভারি থাকায় নিশ্চিন্তে অর্ডার করেছি। প্যাকেজিং খুব ভালো ছিল।"</p><p class="muted">— রাকিব, চট্টগ্রাম</p></div>
+      <div class="review"><p class="stars">★★★★☆</p><p>"সানস্ক্রিনটা দারুণ! দামও বাজারের চেয়ে কম। আবার কিনবো।"</p><p class="muted">— নুসরাত, খুলনা</p></div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="foot-grid">
+      <div><h3>🌸 GlowMart</h3><p class="muted">বাংলাদেশের বিশ্বস্ত অনলাইন স্কিনকেয়ার শপ।</p></div>
+      <div><h3>যোগাযোগ</h3><p class="muted">📞 ০৯XXXXXXXXX<br>✉️ support@glowmart.example</p></div>
+      <div><h3>নীতিমালা</h3><p class="muted"><a href="#">ডেলিভারি নীতি</a><br><a href="#">রিটার্ন নীতি</a><br><a href="#">প্রাইভেসি নীতি</a></p></div>
+    </div>
+    <p class="copy">© ২০২৬ GlowMart • ক্যাশ অন ডেলিভারি সারা দেশে</p>
+  </footer>
+</div>
+
+<!-- ============ PRODUCT MODAL ============ -->
+<div id="product-modal" class="hidden modal-wrap">
+  <div class="modal">
+    <button id="modal-close" class="modal-x" aria-label="বন্ধ করুন">✕</button>
+    <img id="modal-img" src="" alt="">
+    <h3 id="modal-name"></h3>
+    <p class="muted" id="modal-size"></p>
+    <p class="price big" id="modal-price"></p>
+    <p id="modal-desc"></p>
+    <p class="muted small"><strong>ব্যবহার:</strong> <span id="modal-usage"></span></p>
+    <div class="modal-buy">
+      <div class="qty-ctrl"><button id="modal-minus">−</button><span id="modal-qty">১</span><button id="modal-plus">+</button></div>
+      <button id="modal-add" class="btn-primary">কার্টে যোগ করুন</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CART DRAWER ============ -->
+<div id="drawer-overlay" class="hidden"></div>
+<aside id="cart-drawer" class="hidden">
+  <div class="drawer-head"><h3>🛒 আপনার কার্ট</h3><button id="drawer-close" aria-label="বন্ধ করুন">✕</button></div>
+  <div id="cart-items"></div>
+  <div class="drawer-foot">
+    <p>সর্বমোট: <strong id="cart-total">৳০</strong></p>
+    <button id="go-checkout" class="btn-primary">অর্ডার করুন</button>
+  </div>
+</aside>
+
+<!-- ============ CHECKOUT ============ -->
+<section id="checkout-section" class="hidden">
+  <h2>📝 ডেলিভারি তথ্য</h2>
+  <div id="checkout-summary"></div>
+  <form id="checkout-form">
+    <label>নাম<input id="co-name" type="text" required></label>
+    <label>মোবাইল নম্বর<input id="co-phone" type="tel" required></label>
+    <label>সম্পূর্ণ ডেলিভারি ঠিকানা<textarea id="co-address" rows="3" placeholder="বাসা/হোল্ডিং, রোড, এলাকা, থানা, জেলা" required></textarea></label>
+    <label>অর্ডার নোট (ঐচ্ছিক)<textarea id="co-notes" rows="2" placeholder="বিশেষ নির্দেশনা থাকলে লিখুন"></textarea></label>
+    <p class="pay-line">💵 পেমেন্ট: <strong>ক্যাশ অন ডেলিভারি</strong></p>
+    <p id="form-error" class="error"></p>
+    <button type="submit" class="btn-primary">অর্ডার কনফার্ম করুন</button>
+  </form>
+</section>
+
+<!-- ============ CONFIRMATION ============ -->
+<section id="confirmation" class="hidden">
+  <div class="confirm-card">
+    <h2>✅ অর্ডার কনফার্ম!</h2>
+    <p>আপনার অর্ডার নম্বর:</p>
+    <p class="order-id" id="order-id"></p>
+    <p class="muted">শীঘ্রই আমাদের টিম ফোন করে কনফার্ম করবে। ক্যাশ অন ডেলিভারিতে পণ্য হাতে পেয়ে টাকা দেবেন।</p>
+    <button id="continue-shopping" class="btn-primary">আরও কেনাকাটা করুন</button>
+  </div>
+</section>
+
+<script src="app.js"></script>
+</body>
+</html>
